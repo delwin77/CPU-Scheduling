@@ -39,7 +39,11 @@ void displayTable(struct process p[], int totalProcess){
 }
 
 void ganttChart(struct process p[], int totalProcess){
-    printf("\nGANTT CHART\n");
+    printf("\n\nGANTT CHART\n");
+    for(int i=0; i<totalProcess; i++){
+        printf("P%d\t", p[i].processID);
+    }
+    printf("\n");
     for(int i=0; i<totalProcess; i++){
         printf("%d\t", p[i].responseTime);
     }
@@ -158,6 +162,7 @@ void priority(struct process p[], int totalProcess){
     ganttChart(maxPriority, totalProcess);
 }
 
+/*
 void roundRobin(struct process p[], int totalProcess){
     int i, j, quantumTime, slot = 0, time = 0;
     struct process temp, copy[totalProcess];
@@ -206,60 +211,69 @@ void roundRobin(struct process p[], int totalProcess){
     ganttChart(rr, slot);
 
 }
+*/
 
-// void roundRobin(struct process p[], int totalProcess){
-//     int i, quantumTime, currentTime = 0, completedProcesses = 0;
-//     struct process temp, copy[totalProcess];
+void roundRobin(struct process p[], int totalProcess){
+    int i, j, quantumTime, slot = 0, time = 0;
+    struct process temp, copy[totalProcess];
     
-//     printf("Enter quantum time:");
-//     scanf("%d", &quantumTime);
+    printf("Enter quantum time:");
+    scanf("%d", &quantumTime);
 
-//     int slots = 0;
-//     // Create a copy of the processes
-//     for(i = 0; i < totalProcess; i++){
-//         copy[i] = p[i];
-//         copy[i].remaining = copy[i].burstTime;
-//         slots += ceil((float)copy[i].burstTime / quantumTime);
-//     }
+    for(int i=0; i<totalProcess; i++){
+        copy[i] = p[i];
+        copy[i].remaining = copy[i].burstTime;
+        slot += ceil((float)copy[i].burstTime / quantumTime);
+    }
 
-//     // Sort processes based on arrival time
-//     for(i = 0; i < totalProcess-1; i++){
-// 		for(int j = 0; j < totalProcess-i-1; j++){
-// 			if(copy[j].arrivalTime > copy[j+1].arrivalTime){
-// 				temp = copy[j];
-// 				copy[j] = copy[j+1];
-// 				copy[j+1] = temp;
-// 			}
-// 		}
-// 	}
+    for(i=0; i<totalProcess-1; i++){
+		for(j=0; j<totalProcess-i-1; j++){
+			if(copy[j].arrivalTime > copy[j+1].arrivalTime){
+				temp = copy[j];
+				copy[j] = copy[j+1];
+				copy[j+1] = temp;
+			}
+		}
+	}
 
-//     struct process rr[slots];
-//     int index = 0;
-
-//     while(completedProcesses < totalProcess) {
-//         for(i = 0; i < totalProcess; i++) {
-//             if(copy[i].remaining > 0 && copy[i].arrivalTime <= currentTime) {
-//                 if(copy[i].remaining > quantumTime) {
-//                     rr[index] = copy[i];
-//                     currentTime += quantumTime;
-//                     copy[i].remaining -= quantumTime;
-//                 } else {
-//                     rr[index] = copy[i];
-//                     currentTime += copy[i].remaining;
-//                     copy[i].remaining = 0;
-//                     completedProcesses++;
-//                 }
-//                 index++;
-//             }
-//         }
-//     }
-
-//     timeCalculation(rr, index);
-//     displayTable(rr, index);
-//     ganttChart(rr, index);
-// }
-
-
+    struct process rr[slot];
+    int remainingProcesses = totalProcess;
+    j = 0;
+    while(remainingProcesses > 0) {
+        for(i = 0; i < totalProcess; i++) {
+            if(copy[i].remaining > 0) {
+                if(copy[i].remaining > quantumTime) {
+                    rr[j] = copy[i];
+                    if(j == 0){
+                        rr[0].responseTime = rr[0].arrivalTime;
+                    }else{
+                        rr[j].responseTime = time;
+                    }
+                    time += quantumTime;
+                    copy[i].remaining -= quantumTime;
+                } else {
+                    rr[j] = copy[i];
+                    rr[j].responseTime = time;
+                    time += copy[i].remaining;
+                    copy[i].remaining = 0;
+                    remainingProcesses--;
+                }
+                j++;
+            }
+        }
+    }
+    timeCalculation(copy, totalProcess);
+    displayTable(copy, totalProcess);
+    
+    printf("\nGANTT CHART\n");
+    for(int i=0; i<slot; i++){
+        printf("P%d\t", rr[i].processID);
+    }
+    printf("\n");
+    for(int i=0; i<slot; i++){
+        printf("%d\t", rr[i].responseTime);
+    }
+}
 
 int main(){
     int totalProcess, option, flag=1;
@@ -279,7 +293,7 @@ int main(){
         printf("\n");
     }
     while(flag){
-        printf("\n1:FIRST COME FIRST SERVE (FCFS)\n2:SHORTEST JOB FIRST (SJF)\n3:PRIORITY\n4:ROUND ROBIN\n5:EXIT\nYou Choose:");
+        printf("\n\n1:FIRST COME FIRST SERVE (FCFS)\n2:SHORTEST JOB FIRST (SJF)\n3:PRIORITY\n4:ROUND ROBIN\n5:EXIT\nYou Choose:");
         scanf("%d", &option);
         switch (option){
             case 1:
@@ -298,6 +312,8 @@ int main(){
                 printf("Exiting...");
                 flag = 0;
                 break;
+            default:
+                printf("\nEnter a valid number\n");
         }
     }
     return 0;
